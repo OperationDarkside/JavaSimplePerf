@@ -3,30 +3,30 @@ import java.util.ArrayList;
 public class SimplePerf {
 
     private static String recordingName = "Default";
-    private final static ArrayList<Checkpoint> checkPoints = new ArrayList<>();
+    private final static ThreadLocal<ArrayList<Checkpoint>> checkPoints = ThreadLocal.withInitial(() -> new ArrayList<>());
 
     public static void StartRecording() {
-        if (!checkPoints.isEmpty()) {
+        if (!checkPoints.get().isEmpty()) {
             System.out.println("Found old recording: " + recordingName);
             printPerfTrace();
-            checkPoints.clear();
+            checkPoints.get().clear();
         }
         recordingName = "Default";
         System.out.println("Start new recording: " + recordingName);
     }
 
     public static void StartRecording(String newRecordingName) {
-        if (!checkPoints.isEmpty()) {
+        if (!checkPoints.get().isEmpty()) {
             System.out.println("Found old recording: " + recordingName);
             printPerfTrace();
-            checkPoints.clear();
+            checkPoints.get().clear();
         }
         recordingName = newRecordingName;
         System.out.println("Start new recording: " + recordingName);
     }
 
     public static void addCheckpoint(String name) {
-        checkPoints.add(new Checkpoint(name));
+        checkPoints.get().add(new Checkpoint(name));
     }
 
     public static void EndRecordingAndPrint() {
@@ -36,20 +36,20 @@ public class SimplePerf {
 
     public static void clearRecording() {
         System.out.println("Clear recording: " + recordingName);
-        checkPoints.clear();
+        checkPoints.get().clear();
     }
 
     public static String stringify() {
-        if (checkPoints.isEmpty()) {
+        if (checkPoints.get().isEmpty()) {
             return "No checkpoints found for \"" + recordingName + "\"";
         }
-        if (checkPoints.size() == 1) {
-            var cp = checkPoints.get(0);
+        if (checkPoints.get().size() == 1) {
+            var cp = checkPoints.get().get(0);
             return "Only one checkpoint found for \"" + recordingName + "\".\r\n" + cp.getName() + ": "
                     + cp.getTimestamp() + ".";
         }
         System.out.println("Timings for recording: " + recordingName);
-        var it = checkPoints.iterator();
+        var it = checkPoints.get().iterator();
         var prevCheckpoint = it.next();
         StringBuilder sb = new StringBuilder(prevCheckpoint.getName());
         while (it.hasNext()) {
